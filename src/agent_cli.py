@@ -26,6 +26,7 @@ class SecurityAgentCLI:
             "ask": self.natural_language_query,
         }
         self.db_path = Path.home() / "linux-security-agent" / "data" / "security.db"
+        self.current_issues = []
 
     def show_banner(self):
         """Display welcome banner"""
@@ -50,6 +51,15 @@ class SecurityAgentCLI:
         # Simple pattern matching for demo - would use AI in production
         if "safe" in query or "secure" in query:
             self.check_security_status()
+        elif (
+            "concern" in query
+            or "issue" in query
+            or "problem" in query
+            or "what" in query
+        ):
+            self.show_detailed_concerns()
+        elif "fix" in query:
+            self.fix_security_issues()
         elif "ssh" in query:
             self.check_ssh_status()
         elif "update" in query:
@@ -110,9 +120,128 @@ class SecurityAgentCLI:
             print(
                 "\n💡 Would you like me to fix these issues? Type 'fix' or ask me about any concern."
             )
+            # Store issues for later reference
+            self.current_issues = issues
         else:
             print("\n✅ Your system security looks good! No immediate issues found.")
             print("   I'm continuously monitoring for any threats.")
+            self.current_issues = []
+
+    def show_detailed_concerns(self):
+        """Show detailed information about security concerns"""
+        print("\n📋 Detailed Security Analysis:")
+
+        # Check for updates with details
+        try:
+            print("\n🔍 Checking for security updates...")
+            result = subprocess.run(
+                ["sudo", "dnf", "check-update", "--security"],
+                capture_output=True,
+                text=True,
+            )
+
+            if result.stdout.strip():
+                updates = []
+                lines = result.stdout.strip().split("\n")
+                for line in lines:
+                    if (
+                        line
+                        and not line.startswith("Last metadata")
+                        and not line.startswith("Updating")
+                    ):
+                        parts = line.split()
+                        if len(parts) >= 3:
+                            updates.append(
+                                f"  • {parts[0]} (current: {parts[1]} → available: {parts[2]})"
+                            )
+
+                if updates:
+                    print(f"\n📦 Security Updates Available ({len(updates)} packages):")
+                    for update in updates[:10]:  # Show first 10
+                        print(update)
+                    if len(updates) > 10:
+                        print(f"  ... and {len(updates) - 10} more")
+                    print(
+                        "\n💡 Run 'sudo dnf update --security' to install these updates"
+                    )
+            else:
+                print("✅ No security updates needed")
+        except Exception as e:
+            print(f"❌ Could not check updates: {e}")
+
+        # Check SSH configuration details
+        try:
+            print("\n🔍 Checking SSH configuration...")
+            with open("/etc/ssh/sshd_config", "r") as f:
+                config = f.read()
+
+            print("\n🔐 SSH Security Settings:")
+            settings = {
+                "PasswordAuthentication": "Password login",
+                "PermitRootLogin": "Root login",
+                "PubkeyAuthentication": "SSH key authentication",
+                "Port": "SSH Port",
+            }
+
+            for setting, description in settings.items():
+                if setting in config:
+                    for line in config.split("\n"):
+                        if line.strip().startswith(
+                            setting
+                        ) and not line.strip().startswith("#"):
+                            value = line.split()[-1]
+                            status = (
+                                "⚠️ "
+                                if (
+                                    setting == "PasswordAuthentication"
+                                    and value == "yes"
+                                )
+                                or (
+                                    setting == "PermitRootLogin"
+                                    and value not in ["no", "prohibit-password"]
+                                )
+                                else "✅"
+                            )
+                            print(f"  {status} {description}: {value}")
+                            break
+        except Exception as e:
+            print(f"❌ Could not check SSH config: {e}")
+
+        # Check firewall details
+        try:
+            print("\n🔍 Checking firewall configuration...")
+            result = subprocess.run(
+                ["sudo", "firewall-cmd", "--list-all"], capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                print("\n🛡️ Firewall Status: ✅ Active")
+                # Parse key info
+                for line in result.stdout.split("\n"):
+                    if "services:" in line:
+                        services = line.split("services:")[1].strip()
+                        if services:
+                            print(f"  Allowed services: {services}")
+                    elif "ports:" in line:
+                        ports = line.split("ports:")[1].strip()
+                        if ports:
+                            print(f"  Open ports: {ports}")
+            else:
+                print("\n🛡️ Firewall Status: ❌ Not properly configured")
+        except:
+            print("❌ Could not check firewall")
+
+        print("\n💡 Ask me about any of these concerns for more details!")
+
+    def fix_security_issues(self):
+        """Offer to fix detected security issues"""
+        print("\n🔧 Security Fix Options:")
+        print("\nI can help fix these issues:")
+        print("1. Install security updates")
+        print("2. Harden SSH configuration")
+        print("3. Configure firewall properly")
+        print("4. All of the above")
+        print("\nWhich would you like me to fix? (1-4) or 'cancel':")
 
     def check_ssh_status(self):
         """Check SSH security specifically"""
