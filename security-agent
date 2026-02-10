@@ -1,0 +1,11 @@
+#!/bin/bash
+# Security Agent launcher script
+
+AGENT_DIR="$HOME/linux-security-agent"
+PYTHON="/usr/bin/python3"
+
+# Create necessary directories
+mkdir -p "$AGENT_DIR"/{logs,data,config}
+
+# Launch the CLI interface
+exec $PYTHON "$AGENT_DIR/src/agent_cli.py" "$@"

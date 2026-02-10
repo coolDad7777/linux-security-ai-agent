@@ -1,0 +1,23 @@
+[Unit]
+Description=Linux Security AI Agent
+After=network.target
+
+[Service]
+Type=simple
+User=cooldad7777
+Group=cooldad7777
+WorkingDirectory=/home/cooldad7777/linux-security-agent
+ExecStart=/usr/bin/python3 /home/cooldad7777/linux-security-agent/src/security_agent.py --daemon
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
