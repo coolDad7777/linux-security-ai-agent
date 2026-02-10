@@ -1,0 +1,23 @@
+#!/bin/bash
+# Push Linux Security AI Agent to GitHub
+
+echo "📦 Push Linux Security AI Agent to GitHub"
+echo ""
+echo "First, create a new repository on GitHub:"
+echo "1. Go to https://github.com/new"
+echo "2. Repository name: linux-security-ai-agent"
+echo "3. Description: AI-powered Linux security assistant with natural language interface"
+echo "4. Make it Public"
+echo "5. DON'T initialize with README (we already have one)"
+echo ""
+echo "Then run these commands:"
+echo ""
+echo "# Add your GitHub repository as remote:"
+echo "git remote add origin https://github.com/coolDad7777/linux-security-ai-agent.git"
+echo ""
+echo "# Push the code:"
+echo "git push -u origin main"
+echo ""
+echo "Or if you want to use SSH:"
+echo "git remote add origin git@github.com:coolDad7777/linux-security-ai-agent.git"
+echo "git push -u origin main"
